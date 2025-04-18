@@ -14,13 +14,13 @@ export default async function Page() {
                 <input type="text" placeholder="write a comment" name="comment" />
                 <button type="submit">Submit</button>
             </form>
-            <div>
+            <ul>
                 {comments.map((comment: any) => (
-                    <div key={comment.id}>
-                        <p>{comment.comment}</p>
-                    </div>
+                    <li key={comment.id}>
+                        {comment.comment}
+                    </li>
                 ))}
-            </div>
+            </ul>
         </>
         
     );
