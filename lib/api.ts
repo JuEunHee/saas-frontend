@@ -14,23 +14,25 @@ export type FetchWithRetryOptions = {
  * Timeout
  */
 export async function fetchWithTimeout(
-    url: string,
-    timeout: number = 5000,
-    options?: RequestInit
-  ): Promise<Response> {
-    return new Promise((resolve, reject) => {
+  url: string,
+  timeout: number = 5000,
+  options?: RequestInit
+): Promise<Response> {
+    return new Promise(async (resolve, reject) => {
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), timeout);
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
   
-      fetch(url, { ...options, signal: controller.signal })
-        .then((res) => {
-          clearTimeout(id);
-          resolve(res);
-        })
-        .catch((err) => {
-          clearTimeout(id);
-          reject(err);
-        });
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal })
+
+        clearTimeout(timeoutId);
+        resolve(response);
+        console.log('response', response);
+      } catch (error) {
+        clearTimeout(timeoutId);
+        reject(error);
+        console.log('error', error);
+      }
     });
   }
   
@@ -57,7 +59,7 @@ export async function retryer<T>(
           const shouldRetry = retryCondition(error);
 
           if (attempt < retries && shouldRetry) {
-              await new Promise((res) => setTimeout(res, delay));
+              await new Promise((resolve) => setTimeout(resolve, delay));
           } else {
               break;
           }
@@ -81,11 +83,7 @@ export async function fetchWithTimeoutAndRetry(
 
   for (let attempt = 0; attempt <= retryerOptions.retries; attempt++) {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-      const response = await fetch(url, { signal: controller.signal });
-      clearTimeout(timeoutId);
+      const response = await fetchWithTimeout(url, timeout);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

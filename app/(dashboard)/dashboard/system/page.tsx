@@ -5,6 +5,7 @@ export default async function TimeoutTestPage() {
     try {
       const data = await fetchWithTimeoutAndRetry(
         'https://deelay.me/5000/https://jsonplaceholder.typicode.com/posts/1',
+        //'https://deelay.me/5000/https://jsonplaceholder.typicode.com/posts/1',
         {
           timeout: 3000, // 타임아웃을 3초로 설정
           retryerOptions: {
