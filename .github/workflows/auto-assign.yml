@@ -14,6 +14,5 @@ jobs:
           # using the `org/team_slug` or `/team_slug` syntax to add git team as reviewers
           reviewers: |
             * Seolhun
-            /teamReviewerC
           assignees: JuEunHee
           skipKeywords: wip, draft
