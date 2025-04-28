@@ -1,111 +1,187 @@
-# Next.js SaaS Starter
+# �� Finance 대시보드 포트폴리오 프로젝트 기획서
 
-This is a starter template for building a SaaS application using **Next.js** with support for authentication, Stripe integration for payments, and a dashboard for logged-in users.
+## �� 프로젝트 목적
 
-**Demo: [https://next-saas-start.vercel.app/](https://next-saas-start.vercel.app/)**
+본 프로젝트는 개인 또는 스타트업 사용자가 **수입/지출 내역을 체계적으로 관리하고 분석**할 수 있도록 돕는 **금융 분석 대시보드**입니다.  
+사용자는 거래 데이터를 기반으로 **월간 지출 패턴을 시각화**하고, **카테고리별 예산 설정 및 통제**, **계좌 잔액 모니터링** 등을 수행할 수 있습니다.
 
-## Features
+> UI/UX 복잡도와 설계 역량을 강조하는 프론트엔드 중심의 포트폴리오 프로젝트입니다.
 
-- Marketing landing page (`/`) with animated Terminal element
-- Pricing page (`/pricing`) which connects to Stripe Checkout
-- Dashboard pages with CRUD operations on users/teams
-- Basic RBAC with Owner and Member roles
-- Subscription management with Stripe Customer Portal
-- Email/password authentication with JWTs stored to cookies
-- Global middleware to protect logged-in routes
-- Local middleware to protect Server Actions or validate Zod schemas
-- Activity logging system for any user events
+---
 
-## Tech Stack
+## �� 기술 스택 전제
 
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Database**: [Postgres](https://www.postgresql.org/)
-- **ORM**: [Drizzle](https://orm.drizzle.team/)
-- **Payments**: [Stripe](https://stripe.com/)
-- **UI Library**: [shadcn/ui](https://ui.shadcn.com/)
+- **Next.js (App Router)**
+- **Tailwind CSS**
+- **shadcn/ui**  
+(※ 기타 라이브러리는 언급하지 않음)
 
-## Getting Started
+---
 
-```bash
-git clone https://github.com/nextjs/saas-frontend
-cd saas-frontend
-pnpm install
+## �� 주요 데이터 모델 정의 (필드 제외)
+
+### 1. `User`
+> 기존 `nextjs/saas-starter`의 기본 유저 모델 사용
+
+---
+
+### 2. `Account`
+- 하나의 유저가 보유한 자산 수단 (예: 통장, 카드, 현금)
+- 각 거래는 특정 계좌에 속함
+
+---
+
+### 3. `Transaction`
+- 수입/지출 거래 내역
+- 계좌를 통해 발생하며, 카테고리 및 메모, 날짜를 포함
+
+---
+
+### 4. `Category`
+- 거래 항목을 분류하는 체계
+- 예: 식비, 정기구독, 유흥비, 급여, 세금 등
+
+---
+
+### 5. `Budget` *(선택)*
+- 월/카테고리 기준의 예산 설정
+- 설정 예산 대비 사용량 추이 모니터링 가능
+
+---
+
+## �� 모델 간 관계
+
+```txt
+User ---< Account ---< Transaction
+Transaction --- Category
+User ---< Budget
 ```
 
-## Running Locally
+| 관계 | 설명 |
+|------|------|
+| `User` 1:N `Account` | 유저는 여러 자산 계좌를 가짐 |
+| `Account` 1:N `Transaction` | 계좌별로 발생한 거래 내역 기록 |
+| `Transaction` N:1 `Category` | 거래는 하나의 카테고리에 소속 |
+| `User` 1:N `Budget` | 유저는 예산을 월별/카테고리별로 설정 가능 |
 
-Use the included setup script to create your `.env` file:
+---
 
-```bash
-pnpm db:setup
+## �� 서비스 기능 스펙
+
+### �� Dashboard
+
+- ✅ **월간 수입/지출 추이**
+  - 선형 그래프: 월별 합계
+  - 필터: 계좌, 기간
+
+- ✅ **카테고리별 지출 비중**
+  - 원형 그래프 (Pie)
+  - 가장 많이 사용된 항목 시각화
+
+- ✅ **예산 대비 사용률**
+  - Progress bar: 초과 여부 시각화
+  - 카테고리별 예산 잔여량 표시
+
+- ✅ **계좌별 잔액 현황**
+  - 카드 형태로 계좌 요약 정보 노출
+
+---
+
+### �� 거래 내역 (Transaction Table)
+
+- 목록: 날짜, 카테고리, 금액, 메모, 계좌명
+- 필터링:
+  - 날짜 범위
+  - 계좌별
+  - 현금/카드 구분
+  - 카테고리별
+- 정렬: 금액/날짜 오름/내림
+- 드로어(또는 모달)로 거래 상세 보기
+
+---
+
+### �� 계좌 관리
+
+- 계좌 목록 표시 (이름, 유형, 잔액)
+- 계좌 추가/삭제/수정
+- 선택된 계좌에 연결된 거래만 보기
+
+---
+
+### �� 예산 설정
+
+- 월간 예산 설정 기능
+- 카테고리별로 금액 입력 가능
+- 실 사용량 vs 설정 예산 차이 시각화
+- 예산 초과 시 시각적 경고(색상, 아이콘 등)
+
+---
+
+## �� Mock Data 예시 (구조만)
+
+### Transaction 예시
+```ts
+{
+  id: "txn_001",
+  userId: "user_123",
+  accountId: "acc_001",
+  categoryId: "cat_food",
+  amount: -32000,
+  isCash: true,
+  description: "점심 식사",
+  date: "2025-04-18"
+}
 ```
 
-Then, run the database migrations and seed the database with a default user and team:
-
-```bash
-pnpm db:migrate
-pnpm db:seed
+### Category 예시
+```ts
+{
+  id: "cat_food",
+  name: "식비",
+  type: "expense"
+}
 ```
 
-This will create the following user and team:
-
-- User: `test@test.com`
-- Password: `admin123`
-
-You can, of course, create new users as well through `/sign-up`.
-
-Finally, run the Next.js development server:
-
-```bash
-pnpm dev
+### Budget 예시
+```ts
+{
+  id: "bud_001",
+  userId: "user_123",
+  categoryId: "cat_food",
+  month: "2025-04",
+  limit: 200000,
+  spent: 138000
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to see the app in action.
+---
 
-Optionally, you can listen for Stripe webhooks locally through their CLI to handle subscription change events:
+## �� UI 구성 화면 목록
 
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
-```
+| 페이지 | 주요 UI 요소 |
+|--------|--------------|
+| `/dashboard` | 차트 3종 + 계좌 요약 카드 |
+| `/transactions` | 거래 테이블 + 필터 + 상세 드로어 |
+| `/accounts` | 계좌 목록 + 등록/삭제 기능 |
+| `/budgets` | 카테고리별 예산 설정 폼 + 시각화 |
+| `/settings` | 사용자 정보 및 계정 삭제 기능 (기초적) |
 
-## Testing Payments
+---
 
-To test Stripe payments, use the following test card details:
+## �� 확장성 아이디어
 
-- Card Number: `4242 4242 4242 4242`
-- Expiration: Any future date
-- CVC: Any 3-digit number
+- CSV 업로드 → 거래 데이터 대량 삽입
+- 월간 리포트 PDF 출력
+- 알림 설정 (예산 초과, 거래 이상 탐지 등)
+- 거래 자동 분류 기능 (AI 모델 연동)
 
-## Going to Production
+---
 
-When you're ready to deploy your SaaS application to production, follow these steps:
+## �� 추천 개발 플로우
 
-### Set up a production Stripe webhook
-
-1. Go to the Stripe Dashboard and create a new webhook for your production environment.
-2. Set the endpoint URL to your production API route (e.g., `https://yourdomain.com/api/stripe/webhook`).
-3. Select the events you want to listen for (e.g., `checkout.session.completed`, `customer.subscription.updated`).
-
-### Deploy to Vercel
-
-1. Push your code to a GitHub repository.
-2. Connect your repository to [Vercel](https://vercel.com/) and deploy it.
-3. Follow the Vercel deployment process, which will guide you through setting up your project.
-
-### Add environment variables
-
-In your Vercel project settings (or during deployment), add all the necessary environment variables. Make sure to update the values for the production environment, including:
-
-1. `BASE_URL`: Set this to your production domain.
-2. `STRIPE_SECRET_KEY`: Use your Stripe secret key for the production environment.
-3. `STRIPE_WEBHOOK_SECRET`: Use the webhook secret from the production webhook you created in step 1.
-4. `POSTGRES_URL`: Set this to your production database URL.
-5. `AUTH_SECRET`: Set this to a random string. `openssl rand -base64 32` will generate one.
-
-## Other Templates
-
-While this template is intentionally minimal and to be used as a learning resource, there are other paid versions in the community which are more full-featured:
-
-- https://achromatic.dev
-- https://shipfa.st
-- https://makerkit.dev
+1. **모델 설계 & ERD 작성**
+2. **Mock 데이터 100건 생성**
+3. **Transaction Table → 필터 → 드로어 UI 구성**
+4. **Dashboard 차트 연결**
+5. **계좌 → 예산 설정 화면 추가**
+6. **문서화 (README + 블로그)**
