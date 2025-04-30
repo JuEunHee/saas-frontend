@@ -86,7 +86,7 @@ export default async function ActivityPage() {
               {logs.map((log) => {
                 const Icon = iconMap[log.action as ActivityType] || Settings;
                 const formattedAction = formatAction(
-                  log.action as ActivityType
+                  log.action as ActivityType,
                 );
 
                 return (
